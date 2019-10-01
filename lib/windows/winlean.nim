@@ -28,16 +28,16 @@ else:
   type WinChar* = char
 
 type
-  Handle* = int
+  Handle* = int # defined by Microsoft as `typedef PVOID HANDLE`
   LONG* = int32
-  ULONG* = int32
-  PULONG* = ptr int
+  ULONG* = uint32
+  PULONG* = ptr ULONG
   WINBOOL* = int32
-  DWORD* = int32
+  DWORD* = uint32
   PDWORD* = ptr DWORD
   LPINT* = ptr int32
   ULONG_PTR* = uint
-  PULONG_PTR* = ptr uint
+  PULONG_PTR* = ptr ULONG_PTR
   HDC* = Handle
   HGLRC* = Handle
 
@@ -276,51 +276,52 @@ else:
     importc:"CreateHardLinkA", dynlib: "kernel32", stdcall.}
 
 const
-  FILE_ATTRIBUTE_READONLY* = 0x00000001'i32
-  FILE_ATTRIBUTE_HIDDEN* = 0x00000002'i32
-  FILE_ATTRIBUTE_SYSTEM* = 0x00000004'i32
-  FILE_ATTRIBUTE_DIRECTORY* = 0x00000010'i32
-  FILE_ATTRIBUTE_ARCHIVE* = 0x00000020'i32
-  FILE_ATTRIBUTE_DEVICE* = 0x00000040'i32
-  FILE_ATTRIBUTE_NORMAL* = 0x00000080'i32
-  FILE_ATTRIBUTE_TEMPORARY* = 0x00000100'i32
-  FILE_ATTRIBUTE_SPARSE_FILE* = 0x00000200'i32
-  FILE_ATTRIBUTE_REPARSE_POINT* = 0x00000400'i32
-  FILE_ATTRIBUTE_COMPRESSED* = 0x00000800'i32
-  FILE_ATTRIBUTE_OFFLINE* = 0x00001000'i32
-  FILE_ATTRIBUTE_NOT_CONTENT_INDEXED* = 0x00002000'i32
+  FILE_ATTRIBUTE_READONLY* = DWORD(0x00000001)
+  FILE_ATTRIBUTE_HIDDEN* = DWORD(0x00000002)
+  FILE_ATTRIBUTE_SYSTEM* = DWORD(0x00000004)
+  FILE_ATTRIBUTE_DIRECTORY* = DWORD(0x00000010)
+  FILE_ATTRIBUTE_ARCHIVE* = DWORD(0x00000020)
+  FILE_ATTRIBUTE_DEVICE* = DWORD(0x00000040)
+  FILE_ATTRIBUTE_NORMAL* = DWORD(0x00000080)
+  FILE_ATTRIBUTE_TEMPORARY* = DWORD(0x00000100)
+  FILE_ATTRIBUTE_SPARSE_FILE* = DWORD(0x00000200)
+  FILE_ATTRIBUTE_REPARSE_POINT* = DWORD(0x00000400)
+  FILE_ATTRIBUTE_COMPRESSED* = DWORD(0x00000800)
+  FILE_ATTRIBUTE_OFFLINE* = DWORD(0x00001000)
+  FILE_ATTRIBUTE_NOT_CONTENT_INDEXED* = DWORD(0x00002000)
+  INVALID_FILE_ATTRIBUTES* = DWORD(0xFFFFFFFF)
 
-  FILE_FLAG_FIRST_PIPE_INSTANCE* = 0x00080000'i32
-  FILE_FLAG_OPEN_NO_RECALL* = 0x00100000'i32
-  FILE_FLAG_OPEN_REPARSE_POINT* = 0x00200000'i32
-  FILE_FLAG_POSIX_SEMANTICS* = 0x01000000'i32
-  FILE_FLAG_BACKUP_SEMANTICS* = 0x02000000'i32
-  FILE_FLAG_DELETE_ON_CLOSE* = 0x04000000'i32
-  FILE_FLAG_SEQUENTIAL_SCAN* = 0x08000000'i32
-  FILE_FLAG_RANDOM_ACCESS* = 0x10000000'i32
-  FILE_FLAG_NO_BUFFERING* = 0x20000000'i32
-  FILE_FLAG_OVERLAPPED* = 0x40000000'i32
-  FILE_FLAG_WRITE_THROUGH* = 0x80000000'i32
+  FILE_FLAG_FIRST_PIPE_INSTANCE* = DWORD(0x00080000)
+  FILE_FLAG_OPEN_NO_RECALL* = DWORD(0x00100000)
+  FILE_FLAG_OPEN_REPARSE_POINT* = DWORD(0x00200000)
+  FILE_FLAG_POSIX_SEMANTICS* = DWORD(0x01000000)
+  FILE_FLAG_BACKUP_SEMANTICS* = DWORD(0x02000000)
+  FILE_FLAG_DELETE_ON_CLOSE* = DWORD(0x04000000)
+  FILE_FLAG_SEQUENTIAL_SCAN* = DWORD(0x08000000)
+  FILE_FLAG_RANDOM_ACCESS* = DWORD(0x10000000)
+  FILE_FLAG_NO_BUFFERING* = DWORD(0x20000000)
+  FILE_FLAG_OVERLAPPED* = DWORD(0x40000000)
+  FILE_FLAG_WRITE_THROUGH* = DWORD(0x80000000)
 
   MAX_PATH* = 260
 
-  MOVEFILE_COPY_ALLOWED* = 0x2'i32
-  MOVEFILE_CREATE_HARDLINK* = 0x10'i32
-  MOVEFILE_DELAY_UNTIL_REBOOT* = 0x4'i32
-  MOVEFILE_FAIL_IF_NOT_TRACKABLE* = 0x20'i32
-  MOVEFILE_REPLACE_EXISTING* = 0x1'i32
-  MOVEFILE_WRITE_THROUGH* = 0x8'i32
+  MOVEFILE_COPY_ALLOWED* = DWORD(0x2)
+  MOVEFILE_CREATE_HARDLINK* = DWORD(0x10)
+  MOVEFILE_DELAY_UNTIL_REBOOT* = DWORD(0x4)
+  MOVEFILE_FAIL_IF_NOT_TRACKABLE* = DWORD(0x20)
+  MOVEFILE_REPLACE_EXISTING* = DWORD(0x1)
+  MOVEFILE_WRITE_THROUGH* = DWORD(0x8)
 
 type
   WIN32_FIND_DATA* {.pure.} = object
-    dwFileAttributes*: int32
+    dwFileAttributes*: DWORD
     ftCreationTime*: FILETIME
     ftLastAccessTime*: FILETIME
     ftLastWriteTime*: FILETIME
-    nFileSizeHigh*: int32
-    nFileSizeLow*: int32
-    dwReserved0: int32
-    dwReserved1: int32
+    nFileSizeHigh*: DWORD
+    nFileSizeLow*: DWORD
+    dwReserved0: DWORD
+    dwReserved1: DWORD
     cFileName*: array[0..(MAX_PATH) - 1, WinChar]
     cAlternateFileName*: array[0..13, WinChar]
 
@@ -348,11 +349,11 @@ when useWinUnicode:
                         lpFilePart: var WideCString): int32 {.
                         stdcall, dynlib: "kernel32",
                         importc: "GetFullPathNameW".}
-  proc getFileAttributesW*(lpFileName: WideCString): int32 {.
+  proc getFileAttributesW*(lpFileName: WideCString): DWORD {.
                           stdcall, dynlib: "kernel32",
                           importc: "GetFileAttributesW".}
   proc setFileAttributesW*(lpFileName: WideCString,
-                           dwFileAttributes: int32): WINBOOL {.
+                           dwFileAttributes: DWORD): WINBOOL {.
       stdcall, dynlib: "kernel32", importc: "SetFileAttributesW".}
 
   proc copyFileW*(lpExistingFileName, lpNewFileName: WideCString,
@@ -378,11 +379,11 @@ else:
                         lpBuffer: cstring, lpFilePart: var cstring): int32 {.
                         stdcall, dynlib: "kernel32",
                         importc: "GetFullPathNameA".}
-  proc getFileAttributesA*(lpFileName: cstring): int32 {.
+  proc getFileAttributesA*(lpFileName: cstring): DWORD {.
                           stdcall, dynlib: "kernel32",
                           importc: "GetFileAttributesA".}
   proc setFileAttributesA*(lpFileName: cstring,
-                           dwFileAttributes: int32): WINBOOL {.
+                           dwFileAttributes: DWORD): WINBOOL {.
       stdcall, dynlib: "kernel32", importc: "SetFileAttributesA".}
 
   proc copyFileA*(lpExistingFileName, lpNewFileName: cstring,
@@ -404,10 +405,10 @@ else:
     importc: "GetCommandLineA", stdcall, dynlib: "kernel32".}
 
 proc rdFileTime*(f: FILETIME): int64 =
-  result = ze64(f.dwLowDateTime) or (ze64(f.dwHighDateTime) shl 32)
+  result = int64(f.dwLowDateTime or (f.dwHighDateTime shl 32))
 
 proc rdFileSize*(f: WIN32_FIND_DATA): int64 =
-  result = ze64(f.nFileSizeLow) or (ze64(f.nFileSizeHigh) shl 32)
+  result = int64(f.nFileSizeLow or (f.nFileSizeHigh shl 32))
 
 proc getSystemTimeAsFileTime*(lpSystemTimeAsFileTime: var FILETIME) {.
   importc: "GetSystemTimeAsFileTime", dynlib: "kernel32", stdcall.}
@@ -665,17 +666,17 @@ proc waitForMultipleObjects*(nCount: DWORD, lpHandles: PWOHandleArray,
 # for memfiles.nim:
 
 const
-  GENERIC_READ* = 0x80000000'i32
-  GENERIC_WRITE* = 0x40000000'i32
-  GENERIC_ALL* = 0x10000000'i32
-  FILE_SHARE_READ* = 1'i32
-  FILE_SHARE_DELETE* = 4'i32
-  FILE_SHARE_WRITE* = 2'i32
+  GENERIC_READ* = DWORD(0x80000000)
+  GENERIC_WRITE* = DWORD(0x40000000)
+  GENERIC_ALL* = DWORD(0x10000000)
+  FILE_SHARE_READ* = DWORD(1)
+  FILE_SHARE_DELETE* = DWORD(4)
+  FILE_SHARE_WRITE* = DWORD(2)
 
-  CREATE_ALWAYS* = 2'i32
-  CREATE_NEW* = 1'i32
-  OPEN_EXISTING* = 3'i32
-  OPEN_ALWAYS* = 4'i32
+  CREATE_ALWAYS* = DWORD(2)
+  CREATE_NEW* = DWORD(1)
+  OPEN_EXISTING* = DWORD(3)
+  OPEN_ALWAYS* = DWORD(4)
   FILE_BEGIN* = 0'i32
   INVALID_SET_FILE_POINTER* = -1'i32
   NO_ERROR* = 0'i32
@@ -836,7 +837,7 @@ const
 template WSAIORW*(x,y): untyped = (IOC_INOUT or x or y)
 
 const
-  SIO_GET_EXTENSION_FUNCTION_POINTER* = WSAIORW(IOC_WS2,6).DWORD
+  SIO_GET_EXTENSION_FUNCTION_POINTER* = WSAIORW(IOC_WS2,6)
   SO_UPDATE_ACCEPT_CONTEXT* = 0x700B
   AI_V4MAPPED* = 0x0008
   AF_UNSPEC* = 0
@@ -939,7 +940,7 @@ proc inet_ntop*(family: cint, paddr: pointer, pStringBuffer: cstring,
   let res = when useWinUnicode: getVersionExW(ver.addr) else: getVersionExA(ver.addr)
   if res == 0:
     result = nil
-  elif ver.dwMajorVersion >= 6:
+  elif ver.dwMajorVersion >= DWORD(6):
     if inet_ntop_real == nil:
       quit("Can't load inet_ntop proc from " & ws2dll)
     result = inet_ntop_real(family, paddr, pStringBuffer, stringBufSize)

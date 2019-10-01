@@ -953,8 +953,8 @@ proc existsFile*(filename: string): bool {.rtl, extern: "nos$1",
       wrapUnary(a, getFileAttributesW, filename)
     else:
       var a = getFileAttributesA(filename)
-    if a != -1'i32:
-      result = (a and FILE_ATTRIBUTE_DIRECTORY) == 0'i32
+    if a != INVALID_FILE_ATTRIBUTES:
+      result = (a and FILE_ATTRIBUTE_DIRECTORY) == DWORD(0)
   else:
     var res: Stat
     return stat(filename, res) >= 0'i32 and S_ISREG(res.st_mode)
@@ -972,8 +972,8 @@ proc existsDir*(dir: string): bool {.rtl, extern: "nos$1", tags: [ReadDirEffect]
       wrapUnary(a, getFileAttributesW, dir)
     else:
       var a = getFileAttributesA(dir)
-    if a != -1'i32:
-      result = (a and FILE_ATTRIBUTE_DIRECTORY) != 0'i32
+    if a != INVALID_FILE_ATTRIBUTES:
+      result = (a and FILE_ATTRIBUTE_DIRECTORY) != DWORD(0)
   else:
     var res: Stat
     return stat(dir, res) >= 0'i32 and S_ISDIR(res.st_mode)
@@ -992,8 +992,8 @@ proc symlinkExists*(link: string): bool {.rtl, extern: "nos$1",
       wrapUnary(a, getFileAttributesW, link)
     else:
       var a = getFileAttributesA(link)
-    if a != -1'i32:
-      result = (a and FILE_ATTRIBUTE_REPARSE_POINT) != 0'i32
+    if a != INVALID_FILE_ATTRIBUTES:
+      result = (a and FILE_ATTRIBUTE_REPARSE_POINT) != DWORD(0)
   else:
     var res: Stat
     return lstat(link, res) >= 0'i32 and S_ISLNK(res.st_mode)
@@ -1309,7 +1309,7 @@ when defined(Windows) and not weirdTarget:
     var flags = FILE_FLAG_BACKUP_SEMANTICS or FILE_ATTRIBUTE_NORMAL
     if not followSymlink:
       flags = flags or FILE_FLAG_OPEN_REPARSE_POINT
-    let access = if writeAccess: GENERIC_WRITE else: 0'i32
+    let access = if writeAccess: GENERIC_WRITE else: DWORD(0)
 
     when useWinUnicode:
       result = createFileW(
@@ -1451,8 +1451,8 @@ proc getFilePermissions*(filename: string): set[FilePermission] {.
       wrapUnary(res, getFileAttributesW, filename)
     else:
       var res = getFileAttributesA(filename)
-    if res == -1'i32: raiseOSError(osLastError())
-    if (res and FILE_ATTRIBUTE_READONLY) != 0'i32:
+    if res == INVALID_FILE_ATTRIBUTES: raiseOSError(osLastError())
+    if (res and FILE_ATTRIBUTE_READONLY) != DWORD(0):
       result = {fpUserExec, fpUserRead, fpGroupExec, fpGroupRead,
                 fpOthersExec, fpOthersRead}
     else:
@@ -1489,7 +1489,7 @@ proc setFilePermissions*(filename: string, permissions: set[FilePermission]) {.
       wrapUnary(res, getFileAttributesW, filename)
     else:
       var res = getFileAttributesA(filename)
-    if res == -1'i32: raiseOSError(osLastError())
+    if res == INVALID_FILE_ATTRIBUTES: raiseOSError(osLastError())
     if fpUserWrite in permissions:
       res = res and not FILE_ATTRIBUTE_READONLY
     else:
@@ -1498,7 +1498,7 @@ proc setFilePermissions*(filename: string, permissions: set[FilePermission]) {.
       wrapBinary(res2, setFileAttributesW, filename, res)
     else:
       var res2 = setFileAttributesA(filename, res)
-    if res2 == - 1'i32: raiseOSError(osLastError())
+    if res2 == -1'i32: raiseOSError(osLastError())
 
 proc copyFile*(source, dest: string) {.rtl, extern: "nos$1",
   tags: [ReadIOEffect, WriteIOEffect], noNimScript.} =
@@ -1709,7 +1709,7 @@ proc execShellCmd*(command: string): int {.rtl, extern: "nos$1",
 # Templates for filtering directories and files
 when defined(windows) and not weirdTarget:
   template isDir(f: WIN32_FIND_DATA): bool =
-    (f.dwFileAttributes and FILE_ATTRIBUTE_DIRECTORY) != 0'i32
+    (f.dwFileAttributes and FILE_ATTRIBUTE_DIRECTORY) != DWORD(0)
   template isFile(f: WIN32_FIND_DATA): bool =
     not isDir(f)
 else:
@@ -1933,9 +1933,9 @@ iterator walkDir*(dir: string; relative=false): tuple[kind: PathComponent, path:
         while true:
           var k = pcFile
           if not skipFindData(f):
-            if (f.dwFileAttributes and FILE_ATTRIBUTE_DIRECTORY) != 0'i32:
+            if (f.dwFileAttributes and FILE_ATTRIBUTE_DIRECTORY) != DWORD(0):
               k = pcDir
-            if (f.dwFileAttributes and FILE_ATTRIBUTE_REPARSE_POINT) != 0'i32:
+            if (f.dwFileAttributes and FILE_ATTRIBUTE_REPARSE_POINT) != DWORD(0):
               k = succ(k)
             let xx = if relative: extractFilename(getFilename(f))
                      else: dir / extractFilename(getFilename(f))
@@ -2222,7 +2222,7 @@ proc createSymlink*(src, dest: string) {.noNimScript.} =
   when defined(Windows):
     # 2 is the SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE. This allows
     # anyone with developer mode on to create a link
-    let flag = dirExists(src).int32 or 2
+    let flag = DWORD(dirExists(src)) or DWORD(2)
     when useWinUnicode:
       var wSrc = newWideCString(src)
       var wDst = newWideCString(dest)
